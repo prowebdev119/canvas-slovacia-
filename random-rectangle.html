@@ -1,0 +1,199 @@
+<html>
+<head>
+	<style type="text/css">
+		body{
+			background: #dde9f0;
+		}
+		.header{
+			background-color: #222;   
+		    margin-bottom: 10px;
+		    color: white;
+		    padding: 16px;
+		    font-size: 20px;
+		    font-family: sans-serif;
+		}
+		.parameters{
+			height: 830px;
+		    padding: 15px 20px 20px 20px;
+		    background: #2c393e;
+		    width: 350px;
+		    float: left;
+		}
+		.parameters-title{
+			font-family: sans-serif;
+		    color: #22A7F0;
+		    font-size: 1.4em;
+		    font-weight: 700;
+		    margin-top: 5px;
+		    margin-bottom: 20px;
+		}
+		.output{
+			left: 410px;
+    		position: absolute;
+		}
+		canvas{
+			border-bottom: grey 1px solid;
+			border-left: grey 1px solid;
+			display: none;
+		}
+		input[type=text], select {
+		  width: 100%;
+		  padding: 9px 20px;
+		  margin: 7px 0;
+		  display: inline-block;
+		  border: 1px solid #ccc;
+		  border-radius: 4px;
+		  box-sizing: border-box;
+    	  margin-bottom: 15px;	
+		}
+
+		input[type=button] {
+		  width: 100%;
+		  background-color: #4CAF50;
+		  color: white;
+		  padding: 11px 20px;
+		  margin: 7px 0;
+		  border: none;
+		  border-radius: 4px;
+		  cursor: pointer;
+		  font-size: 18px;
+		}
+
+		input[type=button]:hover {
+		  background-color: #45a049;
+		}
+		label{
+		    font-family: sans-serif;
+			color: white;
+		}
+		
+	</style>
+</head>
+
+<body>
+	
+<div class="header">Random Rectangle Generator</div>
+<div class="content">
+	<div class="parameters">
+		<h4 class="parameters-title">Parameters</h4>
+		<form action="/action_page.php">
+		    <label for="width">Canvas Width</label>
+		    <input type="text" id="width" value="500">
+
+		    <label for="height">Canvas Height</label>
+		    <input type="text" id="height" value="400">
+
+		    <label for="divisions">Number of width divisions</label>
+		    <input type="text" id="divisions" value="4">
+
+		    <label for="numsquares">Number of randomly generated squares before moving to left</label>
+		    <input type="text" id="numsquares" value="5">
+
+		    <label for="minheight">Minimum Square Height</label>
+		    <input type="text" id="minheight" value="10">
+
+		    <label for="maxheight">Maximum Square Height</label>
+		    <input type="text" id="maxheight" value="100">
+
+		    <label for="speed">Speed of generating new square (seconds)</label>
+		    <input type="text" id="speed" value="1">
+
+		    <label for="color">Colors of squares</label>
+		    <select id="color">
+		    	<option value='red'>Red</option>
+		    	<option value='green'>Green</option>
+		    	<option value='blue'>Blue</option>
+		    	<option value='orange'>Orange</option>
+		    	<option value='yellow'>Yellow</option>
+		    </select>
+		  
+		    <input type="button" onclick="generate()" value="Generate Rectangles">
+	  	</form>
+	</div>
+	<div class="output">
+		<canvas id="myCanvas"></canvas>
+	</div>
+</div>
+<script type="text/javascript">
+	var interval=null;
+	var canvas = document.getElementById("myCanvas");
+	function generate() {
+		if(interval!=null)
+			clearInterval(interval);
+		var width=Number(document.getElementById("width").value);
+		var height=Number(document.getElementById("height").value);
+		var divisions=Number(document.getElementById("divisions").value);
+		var numsquares=Number(document.getElementById("numsquares").value);
+		var minheight=Number(document.getElementById("minheight").value);
+		var maxheight=Number(document.getElementById("maxheight").value);
+		var speed=Number(document.getElementById("speed").value);
+		var color=document.getElementById("color").value;
+		var r=0,g=0,b=0;
+		if(color=="red")
+			r=255;
+		if(color=="green")
+			g=255;
+		if(color=="blue")
+			b=255;
+		if(color=="orange"){
+			r=255;g=165;
+		}
+		if(color=="yellow"){
+			r=255;g=255;
+		}
+
+		
+		canvas.style.display="block";
+		const ctx = canvas.getContext('2d');
+		ctx.fillStyle = "#FFFFFF";
+		canvas.width = width;
+		canvas.height = height;
+		ctx.clearRect(0, 0, canvas.width, canvas.height);	
+
+		var frameWidth=width/divisions;
+
+		
+		var i=1;
+		interval=setInterval(function(){ 
+			i++;
+			var randomFrame=Math.floor(Math.random() * divisions);  
+			var x=randomFrame*frameWidth;
+			var squareheight=Math.floor(Math.random() * (maxheight-minheight))+minheight;
+			console.log(maxheight,minheight,squareheight);
+			var y=Math.floor(Math.random() * (height-squareheight));  
+			if(i%(numsquares+1)==0) 
+				shiftCanvasLeft(ctx,frameWidth,speed);
+			else
+				fadeInRectange(ctx,x,y,frameWidth,squareheight,r,g,b,speed);
+		},speed*1000);
+
+	}
+	function shiftCanvasLeft(ctx,frameWidth,speed){
+		var alpha=frameWidth*0.01;
+		var shifted=0;
+		var i=0;
+		var interval=setInterval(function(){ 	
+			i++;
+			shift=Math.floor(alpha*i-shifted);
+			shifted=shifted+shift;
+			var imageData = ctx.getImageData(shift, 0, ctx.canvas.width-shift, ctx.canvas.height);
+			ctx.clearRect(0, 0, canvas.width, canvas.height);	
+			ctx.putImageData(imageData, 0, 0);
+			if(i>=100)
+				clearInterval(interval);
+		}, speed*1000/100);
+	}
+	function fadeInRectange(ctx,x,y,width,height,r,g,b,speed){
+		var alpha=0.01;
+		var interval=setInterval(function(){ 			
+        	ctx.fillStyle = 'rgba('+r+','+g+','+b+','+alpha+')';
+			ctx.fillRect(x,y,width,height);
+			alpha=alpha+0.01;
+			if(alpha>=1)
+				clearInterval(interval);
+		 }, speed*1000/100);
+	}
+
+</script>
+</body>
+</html>
